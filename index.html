@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Electrolize&family=Orbitron:wght@500;700&display=swap" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=3" />
 </head>
 <body>
   <div class="bg-stars" aria-hidden="true"></div>
@@ -38,6 +38,7 @@
 
   <div class="layout">
     <nav class="sidenav" id="sidenav" aria-label="Secciones">
+      <div class="nav-links">
       <p class="nav-group">Herramientas</p>
       <a href="#/summary" data-tab="summary"><i>◉</i>Inicio</a>
       <a href="#/calc" data-tab="calc"><i>⇄</i>Calculadora</a>
@@ -53,12 +54,21 @@
       <a href="#/prices" data-tab="prices"><i>$</i>Precios</a>
       <p class="nav-group">Datos</p>
       <a href="#/connect" data-tab="connect"><i>⎘</i>Conectar</a>
+      </div>
+
+      <!-- Aviso obligatorio del Fan Kit en una zona de navegación siempre visible (escritorio). -->
+      <div class="nav-legal">
+        <img src="assets/fankit/MadeByTheCommunity_White.png" width="72" height="72" alt="Star Citizen: Made By The Community" />
+        <p>Star Citizen®, Roberts Space Industries® and Cloud Imperium® are registered trademarks of Cloud Imperium Rights LLC</p>
+      </div>
     </nav>
 
     <main id="main">
       <!-- ================= Inicio ================= -->
       <section id="tab-summary" class="tab">
         <div class="hero" id="hero">
+          <!-- Arte oficial del Fan Kit, sin recortar ni alterar (lleva una marca de agua que no se puede quitar). -->
+          <img class="hero-banner" src="assets/fankit/SC_14_Wallpaper_1500x500.jpg" width="1500" height="500" alt="Arte del Fan Kit de Star Citizen: naves en combate junto a un planeta" />
           <div class="hero-inner">
             <p class="eyebrow">Herramientas para ciudadanos</p>
             <h1>Planifica tus upgrades,<br /> conoce tu flota</h1>
@@ -239,16 +249,23 @@
 
   <footer class="footer">
     <div class="footer-inner">
-      <img class="fankit-logo" src="assets/fankit/logo.png" alt="" hidden />
-      <p>
-        Fan site no oficial de Star Citizen, sin afiliación con el grupo de empresas Cloud Imperium. Todo el contenido que no
-        sea del autor o de los usuarios de este sitio es propiedad de sus respectivos dueños. Star Citizen®, Roberts Space
-        Industries® y Cloud Imperium® son marcas registradas de Cloud Imperium Rights LLC. Imágenes y logotipos del Fan Kit
-        oficial, usados según sus condiciones. Esta herramienta es de solo lectura y no realiza compras ni cambios en tu cuenta.
-      </p>
+      <img src="assets/fankit/MadeByTheCommunity_White.png" width="96" height="96" alt="Star Citizen: Made By The Community" loading="lazy" />
+      <div>
+        <!-- Aviso exigido por el Fankit Agreement (apartado 2g), en su texto original. -->
+        <p lang="en">
+          This site is not endorsed by or affiliated with the Cloud Imperium or Roberts Space Industries group of
+          companies. All game content and materials are copyright Cloud Imperium Rights LLC and Cloud Imperium Rights
+          Ltd.. Star Citizen®, Squadron 42®, Roberts Space Industries®, and Cloud Imperium® are registered trademarks of
+          Cloud Imperium Rights LLC. All rights reserved.
+        </p>
+        <p>
+          Fan site no oficial y sin ánimo de lucro, hecho por un jugador. Las imágenes y el logotipo proceden del Fan Kit
+          oficial y se muestran sin modificar. Esta herramienta es de solo lectura: no realiza compras ni cambios en tu cuenta.
+        </p>
+      </div>
     </div>
   </footer>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=3"></script>
 </body>
 </html>

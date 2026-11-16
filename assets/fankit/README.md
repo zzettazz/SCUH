@@ -1,22 +1,29 @@
 # Assets del Fan Kit oficial
 
-Esta carpeta es opcional. La web funciona sin ella con un diseño propio; si pones aquí archivos del
-**Fan Kit oficial de RSI**, los usa automáticamente:
+Archivos de `F:\SCUH\rsi-fankit`, copiados **sin modificar** (se puede comprobar con `cmp`):
 
-| Archivo | Dónde se usa | Medidas orientativas |
+| Archivo | Origen en el Fan Kit | Uso |
 |---|---|---|
-| `hero.jpg` | Fondo de la cabecera de Inicio | 1920×800 o más, horizontal |
-| `logo.png` | Logotipo pequeño en el pie de página | Fondo transparente, ~300 px de alto |
+| `SC_14_Wallpaper_1500x500.jpg` | `04_WALLPAPERS/Social` | Banner de la página de inicio |
+| `MadeByTheCommunity_White.png` | `03_LOGOS` | Logo «Made By The Community» en el pie y en el menú lateral |
 
-## Cómo conseguirlos
+## Condiciones que se cumplen (Fankit Agreement y Fan Kit Guidelines)
 
-1. Entra en <https://robertsspaceindustries.com/fankit> con tu cuenta de RSI.
-2. Lee y acepta los términos del Fan Kit (tienes que hacerlo tú).
-3. Descarga lo que quieras y copia aquí un fondo como `hero.jpg` y un logotipo como `logo.png`.
-4. Súbelos al repositorio junto con el resto de la web.
+- **Aviso legal** obligatorio (apartado 2g del acuerdo), con su texto original, en el pie de todas las páginas y, junto al logo,
+  el aviso de marcas en el menú lateral, siempre visible en escritorio. Tamaño de letra ≥ 10 pt (14 px).
+- **Logo «Made By The Community»** a opacidad completa y tamaño legible.
+- **Sin alterar los assets:** ni recolorear, ni recortar, ni sombras, ni degradados encima. El banner lleva una marca de agua
+  de Star Citizen incrustada y se muestra entero.
+- **Solo uso no comercial.** La web es gratuita y sin publicidad.
+- No implica patrocinio ni afiliación con CIG.
 
-## Condiciones
+## Pendiente por tu parte
 
-Usa los assets solo como permitan los términos del Fan Kit que aceptaste. El pie de la web ya incluye el aviso
-de fan site no oficial y las marcas de Cloud Imperium. No pongas logos de RSI como si fueran el logotipo de esta
-web ni sugieras que es oficial.
+El acuerdo (apartado 2k) pide **comunicar a CIG la dirección de tu fan site** para que puedan revisarla, y avisar si cambia:
+escribe a `legal_notices@cloudimperiumgames.com` con la URL (`https://zzettazz.github.io/SCUH/`).
+CIG puede retirar el permiso en cualquier momento (apartado 6): en ese caso hay que borrar esta carpeta.
+
+## No se usa
+
+El resto del Fan Kit (audio, modelos 3D, tipografías, otros logos y fondos) no está en este repositorio.
+Cualquier cambio de uso debe revisarse contra el acuerdo y las guías originales.

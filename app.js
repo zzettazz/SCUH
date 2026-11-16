@@ -845,21 +845,6 @@ const ctx = {
 };
 const views = { db: initDb(ctx), goals: initGoals(ctx), fleet: initFleet(ctx), evolution: initEvolution(ctx) };
 
-// Los assets del Fan Kit oficial son opcionales: solo se usan si el archivo existe en assets/fankit/.
-function loadFankit() {
-  const probe = (src) =>
-    new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(true);
-      img.onerror = () => resolve(false);
-      img.src = src;
-    });
-  probe('assets/fankit/hero.jpg').then((ok) => ok && document.documentElement.style.setProperty('--hero-image', 'url("assets/fankit/hero.jpg")'));
-  probe('assets/fankit/logo.png').then((ok) => {
-    if (ok) document.querySelector('.fankit-logo').hidden = false;
-  });
-}
-
 window.addEventListener('hashchange', () => {
   if (currentRoute().name === 'fleet') views.fleet.render();
 });
@@ -867,7 +852,6 @@ window.addEventListener('hashchange', () => {
 setupBookmarklet();
 loadSaved();
 applyCurrency();
-loadFankit();
 if (state.savedAt) render();
 views.fleet.render(); // también funciona sin datos propios: enlaces de flota compartida
 
