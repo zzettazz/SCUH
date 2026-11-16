@@ -227,6 +227,22 @@
     return toCents(em);
   }
 
+  // ---------- Fichas de naves (ship matrix pública de RSI) ----------
+  // Son 5 MB con todo; nos quedamos con los campos que usa la web.
+  async function getShipMatrix() {
+    const res = await fetch('/ship-matrix/index', { credentials: 'include' });
+    if (!res.ok) throw new Error(`ship-matrix → HTTP ${res.status}`);
+    const data = (await res.json())?.data;
+    if (!Array.isArray(data)) throw new Error('Formato inesperado de la ship matrix.');
+    const keep = ['id', 'name', 'size', 'type', 'focus', 'production_status', 'min_crew', 'max_crew', 'cargocapacity', 'length', 'beam', 'height', 'mass', 'scm_speed', 'afterburner_speed', 'url'];
+    return data.map((s) => {
+      const o = Object.fromEntries(keep.map((k) => [k, s[k] ?? null]));
+      o.description = String(s.description ?? '').slice(0, 600);
+      o.manufacturer = s.manufacturer ? { name: s.manufacturer.name, code: s.manufacturer.code } : null;
+      return o;
+    });
+  }
+
   // ---------- Historial ----------
   function parseLogHtml(html) {
     const doc = new DOMParser().parseFromString(html, 'text/html');
@@ -323,6 +339,7 @@
       const buyback = await step('Buy-back', () => getBuyback(status));
       const storeCreditCents = await step('Crédito de tienda', getStoreCredit);
       const skuPrices = (await step('Precios del buy-back', () => getBuybackSkuPrices(catalog, buyback, status))) ?? {};
+      const shipMatrix = await step('Fichas de naves', getShipMatrix);
       const log = $('log').checked ? await step('Historial', () => getPledgeLog(status)) : null;
 
       payload = {
@@ -335,6 +352,7 @@
         buyback,
         storeCreditCents,
         skuPrices,
+        shipMatrix,
         log,
       };
       $('download').style.display = 'block';

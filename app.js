@@ -14,11 +14,16 @@ import {
 } from './lib/chain.js';
 import { meltAdvice, meltSelectionTotals } from './lib/melt.js';
 import { buybackCsv, ccusCsv, logCsv, shipsCsv } from './lib/csv.js';
-import { money, taxPercent } from './lib/format.js';
+import { money, setCurrency, taxPercent } from './lib/format.js';
 import { enrichLog, summarizeLog, TYPE_LABELS } from './lib/log.js';
 import { diffStore, evaluateGoals } from './lib/watch.js';
-
-const $ = (id) => document.getElementById(id);
+import { joinShips, slimShipMatrix } from './lib/ships.js';
+import { parseRate } from './lib/fx.js';
+import { $, card, download, el, table, tag } from './ui.js';
+import { initDb } from './views/db.js';
+import { initEvolution } from './views/evolution.js';
+import { initFleet } from './views/fleet.js';
+import { initGoals } from './views/goals.js';
 
 // Todo lo que guardamos.
 let state = {
@@ -31,18 +36,22 @@ let state = {
   log: null,
   logSavedAt: null,
   skuPrices: {}, // precios exactos de ediciones del buy-back { skuId: céntimos }
-  goals: [], // [{ fromId, toId, lastTotalWithTax, savedAt }]
+  goals: [], // objetivos vigilados [{ fromId, toId, lastTotalWithTax, savedAt }]
   goalAlerts: [], // resultado de la última comprobación de objetivos
   reserved: { ccuPledgeIds: [], shipPledgeIds: [] }, // lo que la calculadora no debe usar
   storeCreditCents: null, // crédito de tienda leído de /account/billing
   meltSelection: [], // pledges marcados en «Canjear» para simular
+  specs: {}, // fichas de naves (ship matrix reducida)
+  multiGoals: [], // objetivos de la pestaña «Objetivos» [{ fromId, toId }]
+  currency: { code: 'USD', rate: null, rateDate: null }, // euros aproximados
 };
 let meltRows = [];
 let creditTouched = false; // el usuario ha escrito su propio crédito
 let account = null;
 let usable = null; // { ccus, ships } tras quitar las reservas
 let graph = null;
-let lastPlan = null; // última ruta calculada (para «Guardar como objetivo»)
+let joined = []; // naves del catálogo con su ficha
+let lastPlan = null; // última ruta calculada (para «Vigilar este objetivo»)
 
 // Guardado local (solo en este navegador). Envuelto en try/catch: en modo privado puede fallar.
 const STORAGE_KEY = 'rsi-upgrade-helper-state';
@@ -55,53 +64,89 @@ function save() {
 }
 const taxRate = () => state.catalog?.app?.pricing?.taxRate ?? 0;
 
-// ---------- Pequeñas utilidades de interfaz (sin innerHTML: los textos vienen de la web) ----------
-function el(tag, props = {}, ...children) {
-  const e = document.createElement(tag);
-  Object.assign(e, props);
-  for (const c of children.flat()) if (c != null && c !== false) e.append(c instanceof Node ? c : String(c));
-  return e;
-}
-
 function setStatus(text, kind = '') {
   $('status').textContent = text;
-  $('status').className = `out ${kind}`;
-}
-
-const tag = (text, kind) => el('span', { className: `tag ${kind}` }, text);
-
-// columns: [{ title, num?, cell: (row) => texto | Node }]
-function table(columns, rows) {
-  return el(
-    'div',
-    { className: 'table-wrap' },
-    el(
-      'table',
-      {},
-      el('thead', {}, el('tr', {}, columns.map((c) => el('th', { className: c.num ? 'num' : '' }, c.title)))),
-      el('tbody', {}, rows.map((r) => el('tr', {}, columns.map((c) => el('td', { className: c.num ? 'num' : '' }, c.cell(r)))))),
-    ),
-  );
-}
-
-function card(label, value, detail) {
-  return el(
-    'div',
-    { className: 'card' },
-    el('div', { className: 'label' }, label),
-    el('div', { className: 'value' }, value),
-    detail && el('div', { className: 'detail' }, detail),
-  );
+  $('status').className = `out status-text ${kind}`;
 }
 
 const shipName = (id) => graph?.ships.get(id)?.name ?? state.catalog?.ships.find((s) => s.id === id)?.name?.trim() ?? `#${id}`;
 
-// ---------- Pestañas ----------
-function showTab(name) {
-  document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('active', x.dataset.tab === name));
-  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.id === `tab-${name}`));
+// ---------- Navegación por rutas (#/calc, #/fleet?s=…) ----------
+function currentRoute() {
+  const [path, query = ''] = location.hash.replace(/^#\/?/, '').split('?');
+  return { name: path, params: new URLSearchParams(query) };
 }
-document.querySelectorAll('.tabs button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+function showTab(name, { updateHash = true } = {}) {
+  if (!document.getElementById(`tab-${name}`)) name = 'summary';
+  document.querySelectorAll('[data-tab]').forEach((x) => x.classList.toggle('active', x.dataset.tab === name));
+  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.id === `tab-${name}`));
+  $('sidenav').classList.remove('open');
+  $('menu-btn').setAttribute('aria-expanded', 'false');
+  if (updateHash && !location.hash.startsWith(`#/${name}`)) history.replaceState(null, '', `#/${name}`);
+}
+const go = (name) => {
+  location.hash = `#/${name}`;
+};
+window.addEventListener('hashchange', () => showTab(currentRoute().name, { updateHash: false }));
+$('menu-btn').addEventListener('click', () => {
+  const open = $('sidenav').classList.toggle('open');
+  $('menu-btn').setAttribute('aria-expanded', String(open));
+});
+
+// ---------- Moneda (euros aproximados) ----------
+async function fetchEuroRate() {
+  // Servicios gratuitos y sin clave, con CORS abierto. Se prueban por orden; si todos fallan, el usuario escribe el tipo.
+  const sources = [
+    ['https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR', (j) => ({ rate: j?.rates?.EUR, date: j?.date })], // datos del BCE
+    ['https://open.er-api.com/v6/latest/USD', (j) => ({ rate: j?.rates?.EUR, date: null })],
+  ];
+  for (const [url, read] of sources) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const r = read(await res.json());
+      if (Number.isFinite(r.rate) && r.rate > 0) return r;
+    } catch {
+      /* probamos el siguiente */
+    }
+  }
+  throw new Error('Sin tipo de cambio disponible');
+}
+
+function applyCurrency() {
+  const c = state.currency;
+  setCurrency(c.code, c.rate);
+  $('currency').value = c.code;
+  $('eur-rate').hidden = c.code !== 'EUR';
+  if (c.rate) $('eur-rate').value = String(c.rate).replace('.', ',');
+}
+
+$('currency').addEventListener('change', async () => {
+  state.currency.code = $('currency').value;
+  if (state.currency.code === 'EUR' && !state.currency.rate) {
+    try {
+      const { rate, date } = await fetchEuroRate();
+      Object.assign(state.currency, { rate, rateDate: date });
+    } catch {
+      state.currency.rate = 0.92; // valor orientativo si no hay conexión; se puede corregir en la casilla
+      setStatus('No pude consultar el tipo de cambio: uso 0,92 €/$. Puedes cambiarlo en la casilla.', 'err');
+    }
+  }
+  applyCurrency();
+  save();
+  render();
+});
+$('eur-rate').addEventListener('change', () => {
+  const r = parseRate($('eur-rate').value);
+  if (r) {
+    state.currency.rate = r;
+    state.currency.rateDate = null;
+    applyCurrency();
+    save();
+    render();
+  } else applyCurrency();
+});
 
 // ---------- Datos que llegan del marcador (bookmarklet) ----------
 const RSI_ORIGIN = 'https://robertsspaceindustries.com';
@@ -133,6 +178,7 @@ function importPayload(p) {
   state.buyback = p.buyback ?? state.buyback;
   if (p.storeCreditCents != null) state.storeCreditCents = p.storeCreditCents;
   state.skuPrices = { ...state.skuPrices, ...(p.skuPrices ?? {}) };
+  if (Array.isArray(p.shipMatrix)) state.specs = slimShipMatrix(p.shipMatrix);
   if (p.log) {
     state.log = p.log;
     state.logSavedAt = p.collectedAt;
@@ -153,7 +199,6 @@ window.addEventListener('message', (e) => {
   // El marcador reintenta el envío hasta recibir confirmación: no importamos dos veces lo mismo.
   if (state.savedAt !== p.collectedAt) importPayload(p);
   e.source?.postMessage({ type: 'rsi-helper-ack' }, RSI_ORIGIN);
-  if (location.hash === '#import') history.replaceState(null, '', location.pathname + location.search);
 });
 
 // Importar el archivo descargado desde el panel de RSI (si el navegador bloqueó la ventana).
@@ -172,7 +217,7 @@ $('import-file').addEventListener('change', async (e) => {
   }
 });
 
-$('btn-refresh').addEventListener('click', () => showTab('connect'));
+$('btn-refresh').addEventListener('click', () => go('connect'));
 
 $('btn-clear').addEventListener('click', () => {
   if (!confirm('¿Borrar todos tus datos guardados en este navegador (hangar, objetivos, reservas…)?')) return;
@@ -209,6 +254,8 @@ function render() {
   graph = state.catalog
     ? buildGraph({ catalog: state.catalog, storeTargets: state.storeTargets ?? [], ownedCcus: usable.ccus, buybackCcus: resolvedBb })
     : null;
+  joined = joinShips(state.catalog?.ships ?? [], state.specs ?? {});
+  $('hero').classList.add('compact');
   setStatus(`✔ Datos del ${new Date(state.savedAt).toLocaleString('es-ES')}`, 'ok');
   renderSummary();
   renderShips();
@@ -221,6 +268,7 @@ function render() {
   renderGoals();
   if (state.log) renderLog();
   else $('log-status').textContent = 'Aún no has traído el historial: pulsa el marcador en RSI y marca «Incluir historial».';
+  Object.values(views).forEach((v) => v.render());
 }
 
 function renderSummary() {
@@ -703,15 +751,6 @@ function renderLogList() {
 $('log-filter').addEventListener('input', renderLogList);
 
 // ---------- Exportar a CSV ----------
-function download(filename, text) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
-  const a = el('a', { href: url, download: filename });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 document.querySelectorAll('[data-export]').forEach((b) =>
   b.addEventListener('click', () => {
     const day = new Date().toISOString().slice(0, 10);
@@ -776,6 +815,9 @@ function loadSaved() {
         goals: saved.goals ?? [],
         reserved: { ccuPledgeIds: [], shipPledgeIds: [], ...(saved.reserved ?? {}) },
         meltSelection: saved.meltSelection ?? [],
+        specs: saved.specs ?? {},
+        multiGoals: saved.multiGoals ?? [],
+        currency: { code: 'USD', rate: null, rateDate: null, ...(saved.currency ?? {}) },
       };
     }
   } catch {
@@ -783,12 +825,59 @@ function loadSaved() {
   }
 }
 
+// ---------- Vistas nuevas (Naves, Objetivos, Mi flota, Evolución) ----------
+// Reciben funciones para leer el estado actual; así no dependen de variables globales de este archivo.
+const ctx = {
+  state: () => state,
+  account: () => account,
+  graph: () => graph,
+  joined: () => joined,
+  usable: () => usable,
+  taxRate,
+  save,
+  go,
+  route: currentRoute,
+  shipName,
+  setStatus,
+  routeBox: (...args) => routeBox(...args),
+  availableCredit: () => availableCredit(),
+  creditBuybacks: () => account?.buyback.creditBuybacksLeft ?? 0,
+};
+const views = { db: initDb(ctx), goals: initGoals(ctx), fleet: initFleet(ctx), evolution: initEvolution(ctx) };
+
+// Los assets del Fan Kit oficial son opcionales: solo se usan si el archivo existe en assets/fankit/.
+function loadFankit() {
+  const probe = (src) =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(true);
+      img.onerror = () => resolve(false);
+      img.src = src;
+    });
+  probe('assets/fankit/hero.jpg').then((ok) => ok && document.documentElement.style.setProperty('--hero-image', 'url("assets/fankit/hero.jpg")'));
+  probe('assets/fankit/logo.png').then((ok) => {
+    if (ok) document.querySelector('.fankit-logo').hidden = false;
+  });
+}
+
+window.addEventListener('hashchange', () => {
+  if (currentRoute().name === 'fleet') views.fleet.render();
+});
+
 setupBookmarklet();
 loadSaved();
-if (state.savedAt) {
-  render();
-  showTab('summary');
-} else {
-  setStatus('Sin datos todavía', '');
-  showTab('connect');
+applyCurrency();
+loadFankit();
+if (state.savedAt) render();
+views.fleet.render(); // también funciona sin datos propios: enlaces de flota compartida
+
+{
+  const route = currentRoute();
+  if (route.name === 'import') showTab('connect', { updateHash: false });
+  else if (route.name) showTab(route.name, { updateHash: false });
+  else if (state.savedAt) showTab('summary');
+  else {
+    setStatus('Sin datos todavía', '');
+    showTab('summary');
+  }
 }
