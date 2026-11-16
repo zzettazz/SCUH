@@ -443,10 +443,10 @@ function fillTargets() {
 $('calc-buyback').addEventListener('change', fillTargets);
 
 const KIND_TAG = {
-  Tuyo: ['ya lo tienes', 'ok'],
+  Tuyo: ['Hangar', 'ok'],
   Warbond: ['Warbond', 'warn'],
   Standard: ['Standard', 'info'],
-  'Buy-back': ['buy-back', 'warn'],
+  'Buy-back': ['Buy-back', 'warn'],
 };
 
 function routeBox(title, route, { best = false, cash = false, note = '', pay = null } = {}) {
