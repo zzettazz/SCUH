@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RSI Upgrade Helper</title>
+  <meta name="description" content="Consulta tu hangar de Star Citizen y calcula la cadena de upgrades (CCU) más barata. No oficial. Tus datos no salen de tu navegador." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%80%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="wrap title-row">
+      <div>
+        <h1>RSI Upgrade Helper</h1>
+        <p class="sub">Herramienta no oficial · solo lectura · tus datos no salen de tu navegador</p>
+      </div>
+      <div class="header-right">
+        <p id="status" class="out"></p>
+        <button id="btn-refresh">Actualizar datos</button>
+      </div>
+    </div>
+    <nav class="wrap tabs" role="tablist">
+      <button role="tab" data-tab="connect">Conectar</button>
+      <button role="tab" data-tab="summary">Resumen</button>
+      <button role="tab" data-tab="calc">Calculadora</button>
+      <button role="tab" data-tab="ships">Naves</button>
+      <button role="tab" data-tab="ccus">Upgrades</button>
+      <button role="tab" data-tab="melt">Canjear</button>
+      <button role="tab" data-tab="buyback">Buy-back</button>
+      <button role="tab" data-tab="log">Historial</button>
+      <button role="tab" data-tab="prices">Precios</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <!-- ================= Conectar ================= -->
+    <section id="tab-connect" class="tab">
+      <h2>Cómo traer tus datos de RSI</h2>
+      <p>Una web no puede leer tu cuenta de RSI por su cuenta (el navegador lo impide). Para eso está el
+        <strong>marcador</strong>: lo pulsas estando en RSI y lee tus datos con tu propia sesión.</p>
+      <ol class="steps">
+        <li>
+          <strong>Arrastra este botón a tu barra de marcadores</strong>
+          (si no la ves: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>, o <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> en Mac):
+          <div><a id="bookmarklet" class="bookmarklet" href="#" title="Arrástrame a la barra de marcadores">🚀 RSI Helper</a></div>
+          <p class="hint">Si no puedes arrastrarlo: crea un marcador nuevo y pega como URL el código de abajo.</p>
+          <details><summary>Ver el código del marcador</summary><textarea id="bookmarklet-code" readonly rows="4"></textarea></details>
+        </li>
+        <li>Abre <a href="https://robertsspaceindustries.com/en/account/pledges" target="_blank" rel="noopener">robertsspaceindustries.com</a> e inicia sesión.</li>
+        <li>Pulsa el marcador <strong>🚀 RSI Helper</strong>. Aparecerá un panel en la web de RSI.</li>
+        <li>Pulsa <strong>«Leer mi cuenta y abrir la web»</strong>. Tarda unos 20 segundos (o 50 si incluyes el historial)
+          y esta web se abrirá con tus datos.</li>
+      </ol>
+
+      <h3>¿El navegador bloqueó la ventana?</h3>
+      <p>En el panel de RSI pulsa «Descargar archivo de datos» y súbelo aquí:</p>
+      <input id="import-file" type="file" accept=".json,application/json" />
+      <p id="import-status" class="out"></p>
+
+      <h3>Privacidad y seguridad</h3>
+      <ul class="plain">
+        <li>No hay servidor: tus datos se guardan solo en este navegador.</li>
+        <li>El marcador solo <strong>lee</strong>: no compra, aplica, canjea ni regala nada. Nunca ve tu contraseña.</li>
+        <li>Herramienta no oficial, sin relación con Cloud Imperium Games ni Roberts Space Industries.</li>
+      </ul>
+      <button id="btn-clear" class="secondary">Borrar mis datos de este navegador</button>
+    </section>
+
+    <!-- ================= Resumen ================= -->
+    <section id="tab-summary" class="tab">
+      <div id="summary-out"><p class="empty">Aún no hay datos. Ve a «Conectar».</p></div>
+      <h3>Exportar a CSV (Excel)</h3>
+      <div class="buttons">
+        <button class="secondary" data-export="naves">Naves</button>
+        <button class="secondary" data-export="upgrades">Upgrades</button>
+        <button class="secondary" data-export="buyback">Buy-back</button>
+        <button class="secondary" data-export="historial">Historial</button>
+      </div>
+    </section>
+
+    <!-- ================= Calculadora ================= -->
+    <section id="tab-calc" class="tab">
+      <div class="calc-grid">
+        <div>
+          <label for="calc-from">Tengo:</label>
+          <select id="calc-from" disabled><option>Sin datos</option></select>
+          <label for="calc-to">Quiero:</label>
+          <select id="calc-to" disabled><option>Sin datos</option></select>
+          <label class="check"><input type="checkbox" id="calc-owned" checked /> Usar los upgrades que ya tengo</label>
+          <label class="check"><input type="checkbox" id="calc-buyback" checked /> Incluir upgrades del buy-back</label>
+          <details id="budget-box" open>
+            <summary>Presupuesto</summary>
+            <label for="calc-credit">Crédito de tienda disponible (USD):</label>
+            <input id="calc-credit" type="number" min="0" step="0.01" value="0" />
+            <label class="check"><input type="checkbox" id="calc-melt" checked /> <span id="calc-melt-label">Sumar lo marcado en «Canjear»</span></label>
+            <p class="hint">Con esto busco también la ruta que menos dinero de tu bolsillo necesita.</p>
+          </details>
+          <details id="reserve-box">
+            <summary id="reserve-summary">Reservas</summary>
+            <p class="hint">Marca lo que NO quieres que use la calculadora: upgrades que guardas para otro plan y naves que no quieres cambiar.</p>
+            <div id="reserve-out"><p class="empty">Sin datos.</p></div>
+          </details>
+          <div class="buttons">
+            <button id="btn-calc" disabled>Calcular</button>
+            <button id="btn-goal" class="secondary" disabled>Guardar como objetivo</button>
+          </div>
+          <p id="bb-prices-status" class="hint"></p>
+          <h3>Mis objetivos</h3>
+          <div id="goals-out"><p class="empty">Aún no tienes objetivos. Calcula una ruta y pulsa «Guardar como objetivo».</p></div>
+        </div>
+        <div id="calc-out"></div>
+      </div>
+    </section>
+
+    <section id="tab-ships" class="tab"></section>
+    <section id="tab-ccus" class="tab"></section>
+
+    <section id="tab-melt" class="tab">
+      <p class="hint">Pledges que podrías canjear por crédito de tienda, de menos a más arriesgado. Esto solo calcula: canjear lo haces tú en RSI.</p>
+      <p id="melt-credit" class="out"></p>
+      <p id="melt-total" class="out"></p>
+      <div id="melt-out"><p class="empty">Sin datos.</p></div>
+    </section>
+
+    <section id="tab-buyback" class="tab"></section>
+
+    <section id="tab-log" class="tab">
+      <p id="log-status" class="out"></p>
+      <div id="log-summary"></div>
+      <input id="log-filter" type="search" placeholder="Buscar en el historial…" disabled />
+      <div id="log-list"></div>
+    </section>
+
+    <section id="tab-prices" class="tab">
+      <label for="sel-from">Desde la nave:</label>
+      <select id="sel-from" disabled><option>Sin datos</option></select>
+      <button id="btn-targets" disabled>Ver upgrades posibles</button>
+      <p class="hint">Precios de la tienda en el momento de tu última actualización, con tus impuestos incluidos.</p>
+      <p id="targets-status" class="out"></p>
+      <div id="targets-out"></div>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    <p>RSI Upgrade Helper · no oficial · Star Citizen® y Roberts Space Industries® son marcas de Cloud Imperium.</p>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

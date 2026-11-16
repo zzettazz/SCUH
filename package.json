@@ -1,0 +1,11 @@
+{
+  "name": "rsi-upgrade-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Web de solo lectura para consultar tu cuenta de RSI y calcular upgrades (CCU). No oficial.",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
+    "start": "node serve.mjs"
+  }
+}
