@@ -77,9 +77,21 @@ function currentRoute() {
   return { name: path, params: new URLSearchParams(query) };
 }
 
-function showTab(name, { updateHash = true } = {}) {
+function showTab(name, { updateHash = true, focus = false } = {}) {
   if (!document.getElementById(`tab-${name}`)) name = 'summary';
-  document.querySelectorAll('[data-tab]').forEach((x) => x.classList.toggle('active', x.dataset.tab === name));
+  document.querySelectorAll('[data-tab]').forEach((x) => {
+    x.classList.toggle('active', x.dataset.tab === name);
+    if (x.dataset.tab === name) x.setAttribute('aria-current', 'page');
+    else x.removeAttribute('aria-current');
+  });
+  const link = document.querySelector(`.sidenav [data-tab="${name}"]`);
+  const label = link ? [...link.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join('').trim() : 'Inicio';
+  document.title = `${label} · RSI Upgrade Helper`;
+  if (focus) {
+    // Tras cambiar de vista, el foco pasa al contenido (lectores de pantalla y teclado) sin saltos de scroll.
+    $('main').focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.id === `tab-${name}`));
   $('sidenav').classList.remove('open');
   $('menu-btn').setAttribute('aria-expanded', 'false');
@@ -88,7 +100,7 @@ function showTab(name, { updateHash = true } = {}) {
 const go = (name) => {
   location.hash = `#/${name}`;
 };
-window.addEventListener('hashchange', () => showTab(currentRoute().name, { updateHash: false }));
+window.addEventListener('hashchange', () => showTab(currentRoute().name, { updateHash: false, focus: true }));
 $('menu-btn').addEventListener('click', () => {
   const open = $('sidenav').classList.toggle('open');
   $('menu-btn').setAttribute('aria-expanded', String(open));
@@ -330,6 +342,7 @@ function renderSummary() {
 function renderShips() {
   const rows = [...account.ships].sort((a, b) => (b.valueCents ?? 0) - (a.valueCents ?? 0));
   $('tab-ships').replaceChildren(
+    el('h1', { className: 'page-title' }, 'Hangar'),
     el('p', { className: 'hint' }, 'Valor = lo que te devolvería RSI en crédito si canjearas el pledge.'),
     table(
       [
@@ -355,6 +368,7 @@ function ccuStatus(c) {
 function renderCcus() {
   const rows = [...account.ccus].sort((a, b) => a.fromName.localeCompare(b.fromName));
   $('tab-ccus').replaceChildren(
+    el('h1', { className: 'page-title' }, 'Upgrades sin aplicar'),
     el('p', { className: 'hint' }, '«Encadenable»: no tienes la nave de origen, pero otro upgrade tuyo termina en ella.'),
     table(
       [
@@ -371,6 +385,7 @@ function renderCcus() {
 function renderBuyback() {
   const bb = account.buyback;
   $('tab-buyback').replaceChildren(
+    el('h1', { className: 'page-title' }, 'Buy-back'),
     bb.creditBuybacksLeft != null
       ? el('p', { className: 'hint' }, `Te quedan ${bb.creditBuybacksLeft} recompras con crédito de tienda; el resto, con dinero.`)
       : null,
@@ -687,7 +702,7 @@ function renderGoals() {
         {
           title: '',
           cell: (g) => {
-            const b = el('button', { className: 'link', title: 'Quitar objetivo' }, '✕');
+            const b = el('button', { className: 'link', title: 'Quitar objetivo', 'aria-label': `Quitar objetivo ${shipName(g.fromId)} a ${shipName(g.toId)}` }, '✕');
             b.addEventListener('click', async () => {
               state.goals = state.goals.filter((x) => !(x.fromId === g.fromId && x.toId === g.toId));
               await save();

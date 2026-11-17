@@ -10,20 +10,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Electrolize&family=Orbitron:wght@500;700&display=swap" />
-  <link rel="stylesheet" href="styles.css?v=3" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
+  <a class="skip-link" href="#main">Saltar al contenido</a>
   <div class="bg-stars" aria-hidden="true"></div>
 
   <header class="topbar">
     <div class="topbar-inner">
       <button class="menu-btn" id="menu-btn" aria-label="Abrir menú" aria-expanded="false">☰</button>
-      <a class="brand" href="#/summary" aria-label="Inicio">
+      <a class="brand" href="#/summary" aria-label="RSI Upgrade Helper, inicio">
         <span class="brand-mark" aria-hidden="true">◈</span>
         <span class="brand-text"><strong>RSI UPGRADE HELPER</strong><small>Fan site no oficial</small></span>
       </a>
       <div class="topbar-actions">
-        <p id="status" class="out status-text"></p>
+        <p id="status" class="out status-text" role="status" aria-live="polite"></p>
         <label class="currency" title="Los euros son una aproximación con el tipo de cambio indicado">
           <select id="currency" aria-label="Moneda">
             <option value="USD">USD $</option>
@@ -31,7 +32,7 @@
           </select>
           <input id="eur-rate" type="text" inputmode="decimal" size="5" hidden aria-label="Euros por dólar" title="Euros por 1 dólar" />
         </label>
-        <button id="btn-refresh">Actualizar datos</button>
+        <button id="btn-refresh">Actualizar<span class="hide-sm"> datos</span></button>
       </div>
     </div>
   </header>
@@ -40,20 +41,20 @@
     <nav class="sidenav" id="sidenav" aria-label="Secciones">
       <div class="nav-links">
       <p class="nav-group">Herramientas</p>
-      <a href="#/summary" data-tab="summary"><i>◉</i>Inicio</a>
-      <a href="#/calc" data-tab="calc"><i>⇄</i>Calculadora</a>
-      <a href="#/goals" data-tab="goals"><i>⌖</i>Objetivos</a>
-      <a href="#/db" data-tab="db"><i>◇</i>Naves</a>
-      <a href="#/fleet" data-tab="fleet"><i>▣</i>Mi flota</a>
+      <a href="#/summary" data-tab="summary"><i aria-hidden="true">◉</i>Inicio</a>
+      <a href="#/calc" data-tab="calc"><i aria-hidden="true">⇄</i>Calculadora</a>
+      <a href="#/goals" data-tab="goals"><i aria-hidden="true">⌖</i>Objetivos</a>
+      <a href="#/db" data-tab="db"><i aria-hidden="true">◇</i>Naves</a>
+      <a href="#/fleet" data-tab="fleet"><i aria-hidden="true">▣</i>Mi flota</a>
       <p class="nav-group">Mi cuenta</p>
-      <a href="#/ships" data-tab="ships"><i>▤</i>Hangar</a>
-      <a href="#/ccus" data-tab="ccus"><i>↗</i>Upgrades</a>
-      <a href="#/melt" data-tab="melt"><i>♻</i>Canjear</a>
-      <a href="#/buyback" data-tab="buyback"><i>↺</i>Buy-back</a>
-      <a href="#/log" data-tab="log"><i>≋</i>Historial</a>
-      <a href="#/prices" data-tab="prices"><i>$</i>Precios</a>
+      <a href="#/ships" data-tab="ships"><i aria-hidden="true">▤</i>Hangar</a>
+      <a href="#/ccus" data-tab="ccus"><i aria-hidden="true">↗</i>Upgrades</a>
+      <a href="#/melt" data-tab="melt"><i aria-hidden="true">♻</i>Canjear</a>
+      <a href="#/buyback" data-tab="buyback"><i aria-hidden="true">↺</i>Buy-back</a>
+      <a href="#/log" data-tab="log"><i aria-hidden="true">≋</i>Historial</a>
+      <a href="#/prices" data-tab="prices"><i aria-hidden="true">$</i>Precios</a>
       <p class="nav-group">Datos</p>
-      <a href="#/connect" data-tab="connect"><i>⎘</i>Conectar</a>
+      <a href="#/connect" data-tab="connect"><i aria-hidden="true">⎘</i>Conectar</a>
       </div>
 
       <!-- Aviso obligatorio del Fan Kit en una zona de navegación siempre visible (escritorio). -->
@@ -63,12 +64,12 @@
       </div>
     </nav>
 
-    <main id="main">
+    <main id="main" tabindex="-1">
       <!-- ================= Inicio ================= -->
       <section id="tab-summary" class="tab">
         <div class="hero" id="hero">
           <!-- Arte oficial del Fan Kit, sin recortar ni alterar (lleva una marca de agua que no se puede quitar). -->
-          <img class="hero-banner" src="assets/fankit/SC_14_Wallpaper_1500x500.jpg" width="1500" height="500" alt="Arte del Fan Kit de Star Citizen: naves en combate junto a un planeta" />
+          <img class="hero-banner" fetchpriority="high" decoding="async" src="assets/fankit/SC_14_Wallpaper_1500x500.jpg" width="1500" height="500" alt="Arte del Fan Kit de Star Citizen: naves en combate junto a un planeta" />
           <div class="hero-inner">
             <p class="eyebrow">Herramientas para ciudadanos</p>
             <h1>Planifica tus upgrades,<br /> conoce tu flota</h1>
@@ -91,7 +92,7 @@
 
       <!-- ================= Calculadora ================= -->
       <section id="tab-calc" class="tab">
-        <h2 class="page-title">Calculadora de upgrades</h2>
+        <h1 class="page-title">Calculadora de upgrades</h1>
         <div class="calc-grid">
           <div class="panel">
             <label for="calc-from">Tengo</label>
@@ -128,7 +129,7 @@
 
       <!-- ================= Objetivos múltiples ================= -->
       <section id="tab-goals" class="tab">
-        <h2 class="page-title">Varios objetivos a la vez</h2>
+        <h1 class="page-title">Varios objetivos a la vez</h1>
         <p class="hint">Añade hasta 6 naves objetivo. Un upgrade solo se puede gastar una vez, así que reparto los tuyos entre todos los objetivos de la forma más barata.</p>
         <div class="panel">
           <div id="multi-list"></div>
@@ -142,9 +143,9 @@
 
       <!-- ================= Naves (base de datos y comparador) ================= -->
       <section id="tab-db" class="tab">
-        <h2 class="page-title">Naves</h2>
+        <h1 class="page-title">Naves</h1>
         <div class="filters panel">
-          <input id="db-q" type="search" placeholder="Buscar nave, fabricante o rol…" />
+          <input id="db-q" type="search" aria-label="Buscar nave, fabricante o rol" placeholder="Buscar nave, fabricante o rol…" />
           <select id="db-size" aria-label="Tamaño"><option value="">Todos los tamaños</option></select>
           <select id="db-focus" aria-label="Rol"><option value="">Todos los roles</option></select>
           <select id="db-sort" aria-label="Orden">
@@ -165,7 +166,7 @@
 
       <!-- ================= Mi flota ================= -->
       <section id="tab-fleet" class="tab">
-        <h2 class="page-title" id="fleet-title">Mi flota</h2>
+        <h1 class="page-title" id="fleet-title">Mi flota</h1>
         <div id="fleet-banner"></div>
         <div id="fleet-out"><p class="empty">Aún no hay datos. Ve a «Conectar».</p></div>
       </section>
@@ -174,7 +175,7 @@
       <section id="tab-ccus" class="tab"></section>
 
       <section id="tab-melt" class="tab">
-        <h2 class="page-title">Qué canjear</h2>
+        <h1 class="page-title">Qué canjear</h1>
         <p class="hint">Pledges que podrías canjear por crédito de tienda, de menos a más arriesgado. Esto solo calcula: canjear lo haces tú en RSI.</p>
         <p id="melt-credit" class="out"></p>
         <p id="melt-total" class="out"></p>
@@ -184,16 +185,16 @@
       <section id="tab-buyback" class="tab"></section>
 
       <section id="tab-log" class="tab">
-        <h2 class="page-title">Historial y evolución</h2>
+        <h1 class="page-title">Historial y evolución</h1>
         <p id="log-status" class="out"></p>
         <div id="log-charts"></div>
         <div id="log-summary"></div>
-        <input id="log-filter" type="search" placeholder="Buscar en el historial…" disabled />
+        <input id="log-filter" type="search" aria-label="Buscar en el historial" placeholder="Buscar en el historial…" disabled />
         <div id="log-list"></div>
       </section>
 
       <section id="tab-prices" class="tab">
-        <h2 class="page-title">Precios de upgrade</h2>
+        <h1 class="page-title">Precios de upgrade</h1>
         <div class="panel">
           <label for="sel-from">Desde la nave</label>
           <select id="sel-from" disabled><option>Sin datos</option></select>
@@ -206,7 +207,7 @@
 
       <!-- ================= Conectar ================= -->
       <section id="tab-connect" class="tab">
-        <h2 class="page-title">Conectar mi cuenta</h2>
+        <h1 class="page-title">Conectar mi cuenta</h1>
         <div class="panel">
           <p>Una web no puede leer tu cuenta de RSI por su cuenta (el navegador lo impide por seguridad). Para eso está el
             <strong>marcador</strong>: lo pulsas estando en RSI y lee tus datos con tu propia sesión.</p>
@@ -216,7 +217,7 @@
               (si no la ves: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>, o <kbd>⌘</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> en Mac):
               <div><a id="bookmarklet" class="bookmarklet" href="#" title="Arrástrame a la barra de marcadores">🚀 RSI Helper</a></div>
               <p class="hint">Si no puedes arrastrarlo: crea un marcador nuevo y pega como URL el código de abajo.</p>
-              <details><summary>Ver el código del marcador</summary><textarea id="bookmarklet-code" readonly rows="4"></textarea></details>
+              <details><summary>Ver el código del marcador</summary><textarea id="bookmarklet-code" readonly rows="4" aria-label="Código del marcador"></textarea></details>
             </li>
             <li>Abre <a href="https://robertsspaceindustries.com/en/account/pledges" target="_blank" rel="noopener">robertsspaceindustries.com</a> e inicia sesión.</li>
             <li>Pulsa el marcador <strong>🚀 RSI Helper</strong>. Aparecerá un panel en la web de RSI.</li>
@@ -228,7 +229,7 @@
         <div class="panel">
           <h3 class="panel-title">¿El navegador bloqueó la ventana?</h3>
           <p>En el panel de RSI pulsa «Descargar archivo de datos» y súbelo aquí:</p>
-          <input id="import-file" type="file" accept=".json,application/json" />
+          <input id="import-file" type="file" accept=".json,application/json" aria-label="Archivo de datos descargado desde RSI" />
           <p id="import-status" class="out"></p>
         </div>
 
@@ -266,6 +267,6 @@
     </div>
   </footer>
 
-  <script type="module" src="app.js?v=3"></script>
+  <script type="module" src="app.js?v=6"></script>
 </body>
 </html>

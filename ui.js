@@ -14,7 +14,11 @@ for (const method of ['replaceChildren', 'append']) {
 
 export function el(tag, props = {}, ...children) {
   const e = document.createElement(tag);
-  Object.assign(e, props);
+  for (const [k, v] of Object.entries(props)) {
+    // aria-*, role y data-* son atributos, no propiedades: antes se asignaban como propiedad y no tenían efecto.
+    if (k.startsWith('aria-') || k.startsWith('data-') || k === 'role') e.setAttribute(k, v);
+    else e[k] = v;
+  }
   for (const c of children.flat()) if (c != null && c !== false) e.append(c instanceof Node ? c : String(c));
   return e;
 }
@@ -72,7 +76,7 @@ function svgEl(name, attrs = {}, ...children) {
  * Gráfico de líneas/barras. series: [{ name, color, kind: 'line'|'bar', values: number[] }]; labels: string[]
  * format(v) da el texto de los ejes y de las etiquetas. Devuelve un nodo <svg> responsive.
  */
-export function chart({ labels, series, format = String, height = 220 }) {
+export function chart({ labels, series, format = String, height = 220, label = 'Gráfico' }) {
   const W = 640;
   const H = height;
   const m = { l: 56, r: 12, t: 12, b: 28 };
@@ -86,7 +90,10 @@ export function chart({ labels, series, format = String, height = 220 }) {
   const y = (v) => m.t + ih - ((v - min) / (max - min || 1)) * ih;
   const barW = Math.max(2, Math.min(24, iw / n - 2));
 
-  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, class: 'chart', role: 'img', preserveAspectRatio: 'xMidYMid meet' });
+  // Resumen para lectores de pantalla (los gráficos no se leen solos); la tabla de abajo sirve de alternativa con los datos.
+  const last = (s) => (s.values.length ? format(s.values.at(-1)) : '—');
+  const summary = `${label}. ${labels[0] ?? ''} a ${labels.at(-1) ?? ''}. ` + series.map((s) => `${s.name}: último valor ${last(s)}`).join('; ');
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, class: 'chart', role: 'img', 'aria-label': summary, preserveAspectRatio: 'xMidYMid meet' });
   for (let i = 0; i <= 4; i++) {
     const v = min + ((max - min) * i) / 4;
     svg.append(

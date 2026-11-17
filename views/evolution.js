@@ -35,14 +35,14 @@ export function initEvolution(ctx) {
         el('h3', { className: 'panel-title' }, 'Evolución acumulada'),
         el('p', { className: 'hint' }, '«Compras» incluye lo pagado con crédito de tienda (dinero reciclado de canjes): no es lo que has gastado de tu bolsillo. Por eso se muestra también el neto.'),
         legend(cum),
-        chart({ labels, series: cum, format: (v) => money(v) }),
+        chart({ labels, series: cum, format: (v) => money(v), label: 'Evolución acumulada de compras y neto' }),
       ),
       el(
         'div',
         { className: 'panel' },
         el('h3', { className: 'panel-title' }, 'Movimientos por mes'),
         legend(monthly),
-        chart({ labels, series: monthly, format: (v) => money(v), height: 200 }),
+        chart({ labels, series: monthly, format: (v) => money(v), height: 200, label: 'Compras y canjes por mes' }),
       ),
       top.length
         ? el(

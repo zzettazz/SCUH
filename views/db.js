@@ -120,8 +120,9 @@ export function initDb(ctx) {
       dlg.close();
       ctx.go('calc');
     });
+    dlg.setAttribute('aria-labelledby', 'ship-dialog-title');
     dlg.replaceChildren(
-      el('h3', {}, s.name),
+      el('h3', { id: 'ship-dialog-title' }, s.name),
       el('div', { className: 'maker hint' }, [s.manufacturer, s.focus, s.status].filter(Boolean).join(' · ')),
       el('p', { className: 'desc' }, s.description || 'Sin descripción.'),
       el(

@@ -32,7 +32,7 @@ export function initGoals(ctx) {
         const to = el('select', { 'aria-label': 'Quiero' }, shipOptions(targets, goal.toId));
         from.value = String(goal.fromId);
         to.value = String(goal.toId);
-        const rm = el('button', { className: 'link', title: 'Quitar objetivo' }, '✕');
+        const rm = el('button', { className: 'link', title: 'Quitar objetivo', 'aria-label': `Quitar objetivo ${i + 1}` }, '✕');
         const update = () => {
           goal.fromId = Number(from.value);
           goal.toId = Number(to.value);
